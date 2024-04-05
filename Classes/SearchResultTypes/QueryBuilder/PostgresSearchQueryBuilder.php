@@ -32,7 +32,6 @@ class PostgresSearchQueryBuilder
     {
         $sanitized = trim($userInput);
         $sanitized = mb_strtolower($sanitized);
-        $sanitized = str_replace(['ä', 'ö', 'ü', 'ß'], ['ae', 'oe', 'ue', 'ss'], $sanitized);
 
         $specialChars = str_split(self::SPECIAL_CHARACTERS);
         $sanitized = str_replace($specialChars, ' ', $sanitized);
