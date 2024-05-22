@@ -492,7 +492,7 @@ class NeosContentPostgresDatabaseMigration implements DatabaseMigrationInterface
             foreach ($propertyExtractions as $propertyExtraction) {
                 $propertyName = $propertyExtraction->getPropertyName();
                 $jsonExtractor = "properties ->> '$propertyName'";
-                $thenSql[] = match ($propertyExtraction->getMode()) {
+                $extractQuery = match ($propertyExtraction->getMode()) {
                     FulltextExtractionMode::EXTRACT_INTO_SINGLE_BUCKET => "($jsonExtractor)",
                     FulltextExtractionMode::EXTRACT_HTML_TAGS => match ($targetBucket) {
                         SearchBucket::CRITICAL => "sandstorm_kissearch_extract_html_content($jsonExtractor, 'h1', 'h2')",
@@ -500,6 +500,7 @@ class NeosContentPostgresDatabaseMigration implements DatabaseMigrationInterface
                         SearchBucket::NORMAL, SearchBucket::MINOR => "sandstorm_kissearch_remove_html_tags_with_content($jsonExtractor, 'h1', 'h2', 'h3', 'h4', 'h5', 'h6')"
                     }
                 };
+                $thenSql[] = 'coalesce(' . $extractQuery . ', \'\')';
             }
             if (count($thenSql) === 1) {
                 // only one property for node type
