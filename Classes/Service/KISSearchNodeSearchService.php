@@ -1,8 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Sandstorm\KISSearch\Service;
 
+use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\ContentRepository\Domain\Service\Context;
+use Neos\ContentRepository\Validation\Validator\NodeIdentifierValidator;
 use Neos\Flow\Configuration\Exception\InvalidConfigurationTypeException;
 use Neos\Neos\Domain\Service\ContentContext;
 use Neos\Neos\Domain\Service\NodeSearchServiceInterface;
@@ -29,11 +33,20 @@ class KISSearchNodeSearchService implements NodeSearchServiceInterface
          * @var $contentContext ContentContext
          */
         $contentContext = $context;
+        $searchResults = [];
+
+        // Add results for node identifiers in the search term directly
+        if (preg_match(NodeIdentifierValidator::PATTERN_MATCH_NODE_IDENTIFIER, $term) !== 0) {
+            $nodeByIdentifier = $context->getNodeByIdentifier($term);
+            if ($nodeByIdentifier !== null && $this->nodeSatisfiesSearchNodeTypes($nodeByIdentifier, $searchNodeTypes)) {
+                $searchResults[$nodeByIdentifier->getPath()] = $nodeByIdentifier;
+            }
+        }
 
         // TODO handle this better: new API in KISSearch that looks inside language content dimension of a node and returns the PG TS language
         try {
             $language = $this->searchService->getDefaultLanguage();
-        } catch (\Throwable $e) {
+        } catch (\Throwable) {
             $language = 'simple';
         }
 
@@ -48,14 +61,13 @@ class KISSearchNodeSearchService implements NodeSearchServiceInterface
             ],
             $language
         );
-        $searchResults = $this->searchService->search($query, 1000);
-        return $this->searchResultsToNodes($contentContext, $searchResults);
+        $searchResultsFromQuery = $this->searchService->search($query, 1000);
+        return array_merge($searchResults, $this->searchResultsToNodes($contentContext, $searchResultsFromQuery));
     }
 
     /**
-     * @param ContentContext $contentContext
      * @param SearchResult[] $searchResults
-     * @return array
+     * @return NodeInterface[]
      */
     protected function searchResultsToNodes(ContentContext $contentContext, array $searchResults): array
     {
@@ -67,5 +79,15 @@ class KISSearchNodeSearchService implements NodeSearchServiceInterface
             $searchResultNodes[] = $contentContext->getNodeByIdentifier($searchResult->getIdentifier()->getIdentifier());
         }
         return $searchResultNodes;
+    }
+
+    protected function nodeSatisfiesSearchNodeTypes(NodeInterface $node, array $searchNodeTypes): bool
+    {
+        foreach ($searchNodeTypes as $nodeTypeName) {
+            if ($node->getNodeType()->isOfType($nodeTypeName)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
