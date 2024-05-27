@@ -312,7 +312,6 @@ class NeosContentPostgresDatabaseMigration implements DatabaseMigrationInterface
                                        end                    as timed_hidden
                               from neos_contentrepository_domain_model_nodedata n
                               where n.path = '/sites'
-                                and not n.hidden
                                 and not n.removed
                                 and n.workspace = 'live'
                               union
@@ -362,11 +361,11 @@ class NeosContentPostgresDatabaseMigration implements DatabaseMigrationInterface
                      when jsonb_array_length(nd.timed_hidden) > 0 then
                        nd.timed_hidden
                      end                            as timed_hidden,
+                   nd.not_hidden                    as not_hidden,
                    sandstorm_kissearch_get_super_types(nd.document_nodetype)
                                                     as super_nodetypes
             from nodes_and_their_documents nd
             where nd.site_nodename is not null
-              and nd.not_hidden
               and nd.not_removed
               and (
               sandstorm_kissearch_is_document(nd.nodetype)

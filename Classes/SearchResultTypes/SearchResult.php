@@ -12,6 +12,7 @@ class SearchResult implements \JsonSerializable
     public const SQL_QUERY_PARAM_LANGUAGE = 'language';
     public const SQL_QUERY_PARAM_LIMIT = 'limit';
     public const SQL_QUERY_PARAM_NOW_TIME = 'nowTime';
+    public const SQL_QUERY_PARAM_NOT_HIDDEN = 'notHidden';
 
     private readonly SearchResultIdentifier $identifier;
     private readonly SearchResultTypeName $resultTypeName;

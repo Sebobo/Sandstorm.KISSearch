@@ -87,15 +87,16 @@ class SearchService
      * With this strategy, the most relevant results are shown, independently of their search result type.
      *
      */
-    public function search(SearchQueryInput $searchQueryInput, int $limit): array
+    public function search(SearchQueryInput $searchQueryInput, int $limit, bool $includeHidden = false): array
     {
         $searchResultTypes = $this->searchResultTypesRegistry->getConfiguredSearchResultTypes();
         return $this->internalSearch(
             $searchQueryInput,
             $searchResultTypes,
             // parameter initializer -> one global limit parameter
-            function(array $defaultParameters) use ($limit, $searchResultTypes) {
+            function(array $defaultParameters) use ($limit, $includeHidden, $searchResultTypes) {
                 $defaultParameters[SearchResult::SQL_QUERY_PARAM_LIMIT] = $limit;
+                $defaultParameters[SearchResult::SQL_QUERY_PARAM_NOT_HIDDEN] = $includeHidden ? null : true;
                 // internally, each result type is also limited using the global limit to improve search performance
                 return self::buildLimitParametersForGlobalLimit($defaultParameters, $limit, $searchResultTypes);
             },
@@ -251,6 +252,7 @@ class SearchService
         // default parameters
         $defaultParameters = [
             SearchResult::SQL_QUERY_PARAM_QUERY => $searchTermParameterValue,
+            SearchResult::SQL_QUERY_PARAM_NOT_HIDDEN => true,
             SearchResult::SQL_QUERY_PARAM_NOW_TIME => $this->currentDateTimeProvider->getCurrentDateTime()->getTimestamp(),
             SearchResult::SQL_QUERY_PARAM_LANGUAGE => $searchQueryInput->getLanguage() ?: $this->getDefaultLanguageForDatabaseType($databaseType)
         ];

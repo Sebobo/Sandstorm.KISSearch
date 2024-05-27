@@ -61,7 +61,7 @@ class KISSearchNodeSearchService implements NodeSearchServiceInterface
             ],
             $language
         );
-        $searchResultsFromQuery = $this->searchService->search($query, 1000);
+        $searchResultsFromQuery = $this->searchService->search($query, 1000, true);
         return array_merge($searchResults, $this->searchResultsToNodes($contentContext, $searchResultsFromQuery));
     }
 

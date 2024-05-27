@@ -49,6 +49,7 @@ class NeosContentPostgresSearchQueryProvider implements SearchQueryProviderInter
 
     function getResultMergingQueryParts(): ResultMergingQueryParts
     {
+        $queryParamNotHidden = SearchResult::SQL_QUERY_PARAM_NOT_HIDDEN;
         $queryParamNowTime = SearchResult::SQL_QUERY_PARAM_NOW_TIME;
         $paramNameSiteNodeName = NeosContentAdditionalParameters::SITE_NODE_NAME;
         $paramNameNodeType = NeosContentAdditionalParameters::DOCUMENT_NODE_TYPES;
@@ -96,8 +97,9 @@ class NeosContentPostgresSearchQueryProvider implements SearchQueryProviderInter
                         inner join neos_neos_domain_model_site s
                             on s.nodename = nd.site_nodename
                     where
+                        (cast(:$queryParamNotHidden as bool) is null or nd.not_hidden = :$queryParamNotHidden)
                         -- filter timed hidden before/after nodes
-                        not sandstorm_kissearch_any_timed_hidden(nd.timed_hidden, to_timestamp(:$queryParamNowTime))
+                        and not sandstorm_kissearch_any_timed_hidden(nd.timed_hidden, to_timestamp(:$queryParamNowTime))
                         -- filter deactivated sites
                         and s.state = 1
                         -- additional query parameters
