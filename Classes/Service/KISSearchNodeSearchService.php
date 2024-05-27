@@ -62,6 +62,13 @@ class KISSearchNodeSearchService implements NodeSearchServiceInterface
             $language
         );
         $searchResultsFromQuery = $this->searchService->search($query, 1000, true);
+
+        // Filter out results with a score lower than 1.0
+        // TODO: Make this configurable in the future
+        $searchResultsFromQuery = array_filter($searchResultsFromQuery, static function (SearchResult $searchResult) {
+            return $searchResult->getScore() >= 1.0;
+        });
+
         return array_merge($searchResults, $this->searchResultsToNodes($contentContext, $searchResultsFromQuery));
     }
 
